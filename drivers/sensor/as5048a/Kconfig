@@ -1,0 +1,12 @@
+# AS5048A Angular position sensor configuration option
+
+# Copyright (c) 2024, Jim Mussared.
+# SPDX-License-Identifier: Apache-2.0
+
+config AS5048A
+    bool "AS5048A Angular position sensor"
+    default y
+    depends on DT_HAS_AMS_AS5048A_ENABLED
+    select SPI
+    help
+      Enable driver for AS5048A Angular position sensor.

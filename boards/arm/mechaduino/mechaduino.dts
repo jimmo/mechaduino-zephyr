@@ -1,0 +1,161 @@
+/*
+ * Copyright (c) 2017 Google LLC.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <atmel/samd21.dtsi>
+#include <atmel/samx2xx18.dtsi>
+#include "mechaduino-pinctrl.dtsi"
+
+/ {
+	model = "Mechaduino";
+	compatible = "atmel,samd21g18a", "atmel,samd21";
+
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &code_partition;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&porta 17 0>;
+			label = "LED";
+		};
+	};
+
+	stepper: stepper {
+		status = "okay";
+		compatible = "allegro,a4954";
+
+		/*
+		IN1, IN2, IN3, IN4
+		*/
+		gpios = <&porta 6 0>, <&porta 21 0>, <&porta 15 0>, <&porta 20 0>;
+		/*
+		vref12: PA7 afE tcc1/1 WO[1]   (or afF tcc3/1 WO[5])
+		vref34: PA7 afF tcc1/0 WO[2]   (or afE tcc0/0 WO[0])
+		tcc0, tcc3 are 24-bit 4-channel, tcc1 is 24-bit 2-channel
+		*/
+		pwms = <&tcc1 1 PWM_USEC(10)>, <&tcc1 0 PWM_USEC(10)>;
+	};
+};
+
+&cpu0 {
+	clock-frequency = <48000000>;
+};
+
+&sercom0 {
+	status = "okay";
+	compatible = "atmel,sam0-uart";
+	current-speed = <115200>;
+	rxpo = <3>;
+	txpo = <1>;
+
+	pinctrl-0 = <&sercom0_uart_default>;
+	pinctrl-names = "default";
+};
+
+&sercom5 {
+	status = "okay";
+	compatible = "atmel,sam0-uart";
+	current-speed = <115200>;
+	rxpo = <3>;
+	txpo = <1>;
+
+	pinctrl-0 = <&sercom5_uart_default>;
+	pinctrl-names = "default";
+};
+
+&sercom4 {
+	status = "okay";
+	compatible = "atmel,sam0-spi";
+
+	/* Correspond directly to pad number. PA12D_SERCOM4_PAD0 */
+	dipo = <0>;
+	/* See datasheet 27.8.1. DOPO=1 corresponds to:
+	   DO=PAD2 (PB10D_SERCOM4_PAD2)
+	   SCK=PAD3 (PB11D_SERCOM4_PAD3)
+	   SS=PAD1 (PB9D_SERCOM4_PAD1)
+	*/
+	dopo = <1>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	pinctrl-0 = <&sercom4_spi_default>;
+	pinctrl-names = "default";
+
+	cs-gpios = <&portb 9 GPIO_ACTIVE_LOW>;
+
+	as5048a: as5048a@0 {
+		status = "okay";
+		compatible = "ams,as5048a";
+		reg = <0>;
+
+		spi-max-frequency = <1000000>;
+	};
+};
+
+&tcc1 {
+	status = "okay";
+	compatible = "atmel,sam0-tcc-pwm";
+	prescaler = <1>;
+	#pwm-cells = <2>;
+
+	pinctrl-0 = <&pwm_vref>;
+	pinctrl-names = "default";
+};
+
+&dac0 {
+	status = "okay";
+
+	pinctrl-0 = <&dac_default>;
+	pinctrl-names = "default";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "sam-ba";
+			reg = <0x00000000 DT_SIZE_K(8)>;
+			read-only;
+		};
+
+		code_partition: partition@2000 {
+			label = "code";
+			reg = <0x2000 DT_SIZE_K(232)>;
+			read-only;
+		};
+
+		/*
+		 * The final 16 KiB is reserved for the application.
+		 * Storage partition will be used by FCB/LittleFS/NVS
+		 * if enabled.
+		 */
+		storage_partition: partition@3c000 {
+			label = "storage";
+			reg = <0x0003c000 0x00004000>;
+		};
+	};
+};
+
+zephyr_udc0: &usb0 {
+	status = "okay";
+
+	pinctrl-0 = <&usb_dc_default>;
+	pinctrl-names = "default";
+
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};

@@ -1,0 +1,25 @@
+description: |
+  Allegro A4954 - Dual Full-Bridge DMOS PWM Motor Driver
+
+  Example definition in devicetree:
+
+    stepper {
+        compatible = "allegro,a4954";
+        gpios = <&porta 6 0>, <&porta 21 0>, <&porta 15 0>, <&porta 20 0>;
+        pwms = <&tcc1 1 PWM_USEC(10)>, <&tcc1 0 PWM_USEC(10)>;
+    };
+
+compatible: "allegro,a4954"
+
+include: base.yaml
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: IN1, IN2, IN3, IN4
+
+  pwms:
+    type: phandle-array
+    required: true
+    description: VREF12, VREF34

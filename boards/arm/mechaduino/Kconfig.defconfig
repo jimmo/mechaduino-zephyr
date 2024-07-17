@@ -1,0 +1,5 @@
+# Mechaduino board configuration
+
+config BOARD
+	default "mechaduino"
+	depends on BOARD_MECHADUINO

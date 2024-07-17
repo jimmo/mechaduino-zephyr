@@ -1,0 +1,2 @@
+
+add_subdirectory_ifdef(CONFIG_AS5048A as5048a)
